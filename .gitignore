@@ -1,0 +1,36 @@
+# ==========================================
+# STM32CubeIDE / Eclipse Output & Build Files
+# ==========================================
+Debug/
+Release/
+Build/
+*.elf
+*.bin
+*.hex
+*.map
+*.o
+*.d
+*.su
+*.cyclo
+*.list
+
+# ==========================================
+# User-Specific IDE Settings (Do NOT track)
+# ==========================================
+.settings/
+.launch
+*.launch
+*.baudrate
+.dmp/
+
+# Keep main project files tracked
+!.project
+!.cproject
+
+# ==========================================
+# OS & Editor Files
+# ==========================================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
