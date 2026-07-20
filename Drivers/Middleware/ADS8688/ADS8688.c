@@ -302,21 +302,13 @@ HAL_StatusTypeDef ADS_Read_All_Raw(
         return HAL_ERROR;
     }
 
-    for(uint8_t i = 0; i <ADS8688_CHANNELS; i++)
+    for(uint8_t i = 0; i < ADS8688_CHANNELS; i++)
     {
-        ret = ADS_Cmd_Write(
-            ads,
-            CONT,
-            ads_raw);
+        ret = ADS_Cmd_Write(ads, CONT, ads_raw);
+        if(ret != HAL_OK) return ret;
 
-        if(ret != HAL_OK)
-        {
-            return ret;
-        }
-
-        data[i] =
-            ((((uint16_t)ads_raw[1]) << 8U)
-            | ((uint16_t)ads_raw[0])) >> 4U;
+        // Fix byte order: MSB is index 0, LSB is index 1
+        data[i] = (((uint16_t)ads_raw[0]) << 8U) | ((uint16_t)ads_raw[1]);
     }
 
     return HAL_OK;

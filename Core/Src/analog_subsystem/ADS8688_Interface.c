@@ -40,13 +40,18 @@ void ADS8688_RegisterDevice(
 
 
 
-static ANALOG_INPUT_StatusTypeDef
-ADS8688_Interface_Init(
-    ANALOG_INPUT_InitTypeDef *init)
+/* Update in ADS8688_Interface.c */
+static ANALOG_INPUT_StatusTypeDef ADS8688_Interface_Init(ANALOG_INPUT_InitTypeDef *init)
 {
-    (void)init;
+    if(g_adsHandle == NULL) return ANALOG_INPUT_ERROR;
 
-    if(g_adsHandle == NULL)
+    // Use default/provided configuration to initialize the chip
+    ADS8688_Config_t config = { .range = {0} }; // Default range
+
+    if(ADS8688_Init(g_adsHandle, g_adsHandle->spiHandle,
+                    g_adsHandle->csPinBank, g_adsHandle->csPin,
+                    g_adsHandle->rstPinBank, g_adsHandle->rstPin,
+                    &config) != HAL_OK)
     {
         return ANALOG_INPUT_ERROR;
     }

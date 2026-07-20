@@ -24,6 +24,8 @@
 #include "iso8200aq.h"
 #include "clt01_38sq7.h"
 #include "current_limiter.h"
+#include "analog_input.h"
+#include <stdbool.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -100,86 +102,65 @@ int main(void)
   MX_SPI4_Init();
   /* USER CODE BEGIN 2 */
   /* USER CODE BEGIN 2 */
-    CLT01_Status_t cltStatus;
-    OutputDriver_Status_t isoStatus;
-    uint8_t isoTestPattern = 0x01; // Walking bit for ISO output validation
+  bool spiTestPassed = ANALOG_INPUT_TestSPI(&hspi4);
 
-    /* Initialize both current limiter and isolated output driver pins/peripherals */
-    CurrentLimiter_Init();
-    OutputDriver_Init();
-
-    while (1)
+    if (!spiTestPassed)
     {
-        bool clt_bus_ok = false;
-        bool iso_bus_ok = false;
-
-        // ==========================================
-        // 1. VALIDATE CLT CHIP (SPI1 Bus Health)
-        // ==========================================
-        // We check for HAL_OK to confirm the master-slave SPI link is ticking.
-        // We bypass CLT01_IsAlive() since unconnected inputs return 0x0000/0xFFFF.
-        if (CurrentLimiter_Read(&cltStatus) == HAL_OK)
-        {
-            clt_bus_ok = true;
-        }
-
-        // ==========================================
-        // 2. VALIDATE ISO CHIP (SPI2/SPI3 Bus Health)
-        // ==========================================
-        if (OutputDriver_Write(isoTestPattern))
-        {
-            OutputDriver_ReadStatus(&isoStatus);
-            iso_bus_ok = true;
-        }
-
-        // ==========================================
-        // 3. COMBINED LED DIAGNOSTIC VISUALIZATION
-        // ==========================================
-        if (clt_bus_ok && iso_bus_ok)
-        {
-            /*
-               BOTH CHIPS HEALTHY: All SPI hardware channels are communicating.
-               Blink slowly (500ms) to indicate systemic success.
-            */
-            HAL_GPIO_TogglePin(USR_LED_GPIO_Port, USR_LED_Pin);
-            HAL_Delay(1000);
-        }
-        else if (!clt_bus_ok && iso_bus_ok)
-        {
-            /*
-               CLT FAULT ONLY: ISO works, but CLT SPI bus timed out or broke.
-               Blink fast (100ms) to isolate the error.
-            */
-            HAL_GPIO_TogglePin(USR_LED_GPIO_Port, USR_LED_Pin);
-            HAL_Delay(100);
-        }
-        else if (clt_bus_ok && !iso_bus_ok)
-        {
-            /*
-               ISO FAULT ONLY: CLT works, but ISO SPI bus transaction aborted.
-               Blink rapid-stutter (50ms) to isolate the error.
-            */
-            HAL_GPIO_TogglePin(USR_LED_GPIO_Port, USR_LED_Pin);
-            HAL_Delay(50);
-        }
-        else
-        {
-            /*
-               TOTAL BUS FAILURE: Both SPI communication blocks are completely dead.
-               Keep the status LED Solid ON.
-            */
-            HAL_GPIO_WritePin(USR_LED_GPIO_Port, USR_LED_Pin, GPIO_PIN_SET);
-            HAL_Delay(10); // Small guard delay for stability
-        }
-
-        // Shift the ISO walking bit pattern for when you connect 24V field power
-        isoTestPattern <<= 1;
-        if (isoTestPattern == 0x00)
-        {
-            isoTestPattern = 0x01;
-        }
+        // SPI verification failed (MISO/MOSI error, unpowered chip, or bad wiring)
+        Error_Handler();
     }
-    /* USER CODE END 2 */
+
+  CLT01_Status_t cltStatus;
+  OutputDriver_Status_t isoStatus;
+  uint8_t isoTestPattern = 0x01;
+
+  CurrentLimiter_Init();
+  OutputDriver_Init();
+
+  while (1)
+  {
+      bool clt_bus_ok = false;
+      bool iso_bus_ok = false;
+
+      if (CurrentLimiter_Read(&cltStatus) == HAL_OK)
+      {
+          clt_bus_ok = true;
+      }
+
+      if (OutputDriver_Write(isoTestPattern))
+      {
+          OutputDriver_ReadStatus(&isoStatus);
+          iso_bus_ok = true;
+      }
+
+      if (clt_bus_ok && iso_bus_ok)
+      {
+          HAL_GPIO_TogglePin(USR_LED_GPIO_Port, USR_LED_Pin);
+          HAL_Delay(1000);
+      }
+      else if (!clt_bus_ok && iso_bus_ok)
+      {
+          HAL_GPIO_TogglePin(USR_LED_GPIO_Port, USR_LED_Pin);
+          HAL_Delay(100);
+      }
+      else if (clt_bus_ok && !iso_bus_ok)
+      {
+          HAL_GPIO_TogglePin(USR_LED_GPIO_Port, USR_LED_Pin);
+          HAL_Delay(50);
+      }
+      else
+      {
+          HAL_GPIO_WritePin(USR_LED_GPIO_Port, USR_LED_Pin, GPIO_PIN_SET);
+          HAL_Delay(10);
+      }
+
+      isoTestPattern <<= 1;
+      if (isoTestPattern == 0x00)
+      {
+          isoTestPattern = 0x01;
+      }
+  }
+
 }
 
 /**

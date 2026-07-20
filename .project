@@ -29,11 +29,4 @@
 		<nature>org.eclipse.cdt.managedbuilder.core.managedBuildNature</nature>
 		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>Drivers/Middleware/ADS8688</name>
-			<type>2</type>
-			<location>C:/Users/karam/OneDrive/Desktop/PLC project/ADS8688-STM32-main</location>
-		</link>
-	</linkedResources>
 </projectDescription>

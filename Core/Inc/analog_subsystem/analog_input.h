@@ -1,6 +1,7 @@
 #ifndef __ANALOG_INPUT_H
 #define __ANALOG_INPUT_H
-
+#include <stdbool.h>
+#include "stm32h7xx_hal.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -53,7 +54,8 @@ ANALOG_INPUT_DrvTypeDef;
 /*=========================================================
   BSP API
 =========================================================*/
-
+/* Diagnostic function declaration */
+bool ANALOG_INPUT_TestSPI(SPI_HandleTypeDef *hspi);
 void BSP_ANALOG_RegisterDriver(
     ANALOG_INPUT_DrvTypeDef *drv);
 
