@@ -9,35 +9,69 @@ typedef struct
 {
     SPI_HandleTypeDef *hspi;
 
-    /* Chip Select Pin */
+    /* SPI Chip Select */
     GPIO_TypeDef *CS_Port;
-    uint16_t      CS_Pin;
+    uint16_t CS_Pin;
 
-    /* New Hardware Control & Diagnostic Pins */
-    GPIO_TypeDef *EN_Port;     // DI_EN
-    uint16_t      EN_Pin;
+    /* Device Enable */
+    GPIO_TypeDef *EN_Port;
+    uint16_t EN_Pin;
 
-    GPIO_TypeDef *GOOD_Port;   // DI_GOOD
-    uint16_t      GOOD_Pin;
+    /* Optional Hardware Diagnostic Pins */
+    GPIO_TypeDef *GOOD_Port;
+    uint16_t GOOD_Pin;
 
-    GPIO_TypeDef *FAULT_Port;  // DI_FAULT
-    uint16_t      FAULT_Pin;
+    GPIO_TypeDef *FAULT_Port;
+    uint16_t FAULT_Pin;
 
 } CLT01_Handle_t;
 
+
+/*=========================================================
+ * Decoded SPI Status Frame
+ *========================================================*/
 typedef struct
 {
-    uint8_t  Inputs;
-    bool     UnderVoltage;
-    bool     OverTemperature;
-    bool     StopBitError;
-    bool     ParityError;
+    /* Raw SPI frame */
     uint16_t RawFrame;
+
+    /* Input bitmap (IN1..IN8) */
+    uint8_t Inputs;
+
+    /* Individual input states */
+    uint8_t Channel[8];
+
+    /* Device diagnostics */
+    uint8_t SupplyVoltageAlarm;
+    uint8_t OverTemperatureAlarm;
+
+    /* Frame diagnostics */
+    uint8_t ParityValid;
+    uint8_t StopBitsValid;
+   uint8_t FrameValid;
+
+    /* Hardware diagnostics */
+    uint8_t GoodPinState;
+    uint8_t FaultPinState;
+
+    /* Overall driver status */
+    uint8_t DeviceAlive;
+
 } CLT01_Status_t;
 
+
+/* Driver Functions */
 HAL_StatusTypeDef CLT01_Init(CLT01_Handle_t *hclt);
-HAL_StatusTypeDef CLT01_ReadStatus(CLT01_Handle_t *hclt, CLT01_Status_t *status);
-bool CLT01_IsAlive(const CLT01_Status_t *status);
-HAL_StatusTypeDef CLT01_TestCommunication(CLT01_Handle_t *hclt, uint16_t *rawFrame);
+
+HAL_StatusTypeDef CLT01_ReadStatus(
+        CLT01_Handle_t *hclt,
+        CLT01_Status_t *status);
+
+HAL_StatusTypeDef CLT01_TestCommunication(
+        CLT01_Handle_t *hclt,
+        uint16_t *rawFrame);
+
+bool CLT01_IsAlive(
+        const CLT01_Status_t *status);
 
 #endif

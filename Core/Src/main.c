@@ -20,13 +20,13 @@
 #include "main.h"
 #include "spi.h"
 #include "gpio.h"
+#include "iso8200aq.h"
 #include "output_driver.h"
 #include "iso8200aq.h"
 #include "clt01_38sq7.h"
 #include "current_limiter.h"
 #include "analog_input.h"
 #include <stdbool.h>
-
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -101,65 +101,58 @@ int main(void)
   MX_SPI2_Init();
   MX_SPI4_Init();
   /* USER CODE BEGIN 2 */
-  /* USER CODE BEGIN 2 */
-  bool spiTestPassed = ANALOG_INPUT_TestSPI(&hspi4);
 
-    if (!spiTestPassed)
-    {
-        // SPI verification failed (MISO/MOSI error, unpowered chip, or bad wiring)
-        Error_Handler();
-    }
 
   CLT01_Status_t cltStatus;
-  OutputDriver_Status_t isoStatus;
-  uint8_t isoTestPattern = 0x01;
+    OutputDriver_Status_t isoStatus;
+    uint8_t isoTestPattern = 0x01;
 
-  CurrentLimiter_Init();
-  OutputDriver_Init();
+    CurrentLimiter_Init();
+    OutputDriver_Init();
 
-  while (1)
-  {
-      bool clt_bus_ok = false;
-      bool iso_bus_ok = false;
+    while (1)
+    {
+        bool clt_bus_ok = false;
+        bool iso_bus_ok = false;
 
-      if (CurrentLimiter_Read(&cltStatus) == HAL_OK)
-      {
-          clt_bus_ok = true;
-      }
+        if (CurrentLimiter_Read(&cltStatus) == HAL_OK)
+        {
+            clt_bus_ok = true;
+        }
 
-      if (OutputDriver_Write(isoTestPattern))
-      {
-          OutputDriver_ReadStatus(&isoStatus);
-          iso_bus_ok = true;
-      }
+        if (OutputDriver_Write(isoTestPattern))
+        {
+            OutputDriver_ReadStatus(&isoStatus);
+            iso_bus_ok = true;
+        }
 
-      if (clt_bus_ok && iso_bus_ok)
-      {
-          HAL_GPIO_TogglePin(USR_LED_GPIO_Port, USR_LED_Pin);
-          HAL_Delay(1000);
-      }
-      else if (!clt_bus_ok && iso_bus_ok)
-      {
-          HAL_GPIO_TogglePin(USR_LED_GPIO_Port, USR_LED_Pin);
-          HAL_Delay(100);
-      }
-      else if (clt_bus_ok && !iso_bus_ok)
-      {
-          HAL_GPIO_TogglePin(USR_LED_GPIO_Port, USR_LED_Pin);
-          HAL_Delay(50);
-      }
-      else
-      {
-          HAL_GPIO_WritePin(USR_LED_GPIO_Port, USR_LED_Pin, GPIO_PIN_SET);
-          HAL_Delay(10);
-      }
+        if (clt_bus_ok && iso_bus_ok)
+        {
+            HAL_GPIO_TogglePin(USR_LED_GPIO_Port, USR_LED_Pin);
+            HAL_Delay(1000);
+        }
+        else if (!clt_bus_ok && iso_bus_ok)
+        {
+            HAL_GPIO_TogglePin(USR_LED_GPIO_Port, USR_LED_Pin);
+            HAL_Delay(100);
+        }
+        else if (clt_bus_ok && !iso_bus_ok)
+        {
+            HAL_GPIO_TogglePin(USR_LED_GPIO_Port, USR_LED_Pin);
+            HAL_Delay(50);
+        }
+        else
+        {
+            HAL_GPIO_WritePin(USR_LED_GPIO_Port, USR_LED_Pin, GPIO_PIN_SET);
+            HAL_Delay(10);
+        }
 
-      isoTestPattern <<= 1;
-      if (isoTestPattern == 0x00)
-      {
-          isoTestPattern = 0x01;
-      }
-  }
+        isoTestPattern <<= 1;
+        if (isoTestPattern == 0x00)
+        {
+            isoTestPattern = 0x01;
+        }
+    }
 
 }
 

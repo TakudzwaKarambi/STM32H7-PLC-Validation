@@ -25,13 +25,11 @@ void OutputDriver_Init(void)
     init.chanEnBitmap =
         ISO8200AQ_CONF_PARAM_CHANNEL_ENABLE_BITMAP_DEVICE_0;
 
-    Iso8200aq_Init(&init);
-
     Iso8200aq_SetNbDevices(1);
 
-    Iso8200aq_SetOutEnable(
-        OUTPUT_DEVICE_ID,
-        1);
+    Iso8200aq_Init(&init);
+
+    Iso8200aq_SetOutEnable(0,1);
 
     g_outputBitmap =
         init.chanEnBitmap;
