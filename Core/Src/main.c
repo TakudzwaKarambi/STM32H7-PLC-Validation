@@ -18,18 +18,21 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "eth.h"
 #include "spi.h"
 #include "gpio.h"
-#include "iso8200aq.h"
+
+/* Private includes ----------------------------------------------------------*/
+/* USER CODE BEGIN Includes */
 #include "output_driver.h"
 #include "iso8200aq.h"
 #include "clt01_38sq7.h"
 #include "current_limiter.h"
 #include "analog_input.h"
 #include <stdbool.h>
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
-
+#include "dac81408.h"
+#include "DAC81408_Interface.h"
+#include "analog_output.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -85,6 +88,9 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
+  CurrentLimiter_Init();
+    OutputDriver_Init();
+
 
   /* USER CODE END Init */
 
@@ -100,60 +106,69 @@ int main(void)
   MX_SPI1_Init();
   MX_SPI2_Init();
   MX_SPI4_Init();
+ // MX_ETH_Init();
   /* USER CODE BEGIN 2 */
+  BSP_ANALOG_OUTPUT_RegisterDriver(&DAC81408Drv);
 
+      if (BSP_ANALOG_OUTPUT_Init(NULL) != ANALOG_OUTPUT_OK)
+      {
+          Error_Handler();
+      }
 
+      uint16_t dacValues[8] = {32768, 32768, 32768, 32768, 32768, 32768, 32768, 32768};
   CLT01_Status_t cltStatus;
     OutputDriver_Status_t isoStatus;
-    uint8_t isoTestPattern = 0x01;
+    uint8_t isoTestPattern = 0x0F;
+  /* USER CODE END 2 */
 
-    CurrentLimiter_Init();
-    OutputDriver_Init();
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
+  while (1)
+  {
+    /* USER CODE END WHILE */
+	  BSP_ANALOG_OUTPUT_Write(dacValues);
+    /* USER CODE BEGIN 3 */
 
-    while (1)
-    {
-        bool clt_bus_ok = false;
-        bool iso_bus_ok = false;
+	  bool clt_bus_ok = false;
+	        bool iso_bus_ok = false;
 
-        if (CurrentLimiter_Read(&cltStatus) == HAL_OK)
-        {
-            clt_bus_ok = true;
-        }
+	        if (CurrentLimiter_Read(&cltStatus) == HAL_OK)
+	        {
+	            clt_bus_ok = true;
+	        }
 
-        if (OutputDriver_Write(isoTestPattern))
-        {
-            OutputDriver_ReadStatus(&isoStatus);
-            iso_bus_ok = true;
-        }
+	        if (OutputDriver_Write(isoTestPattern))
+	        {
+	            OutputDriver_ReadStatus(&isoStatus);
+	            iso_bus_ok = true;
+	        }
 
-        if (clt_bus_ok && iso_bus_ok)
-        {
-            HAL_GPIO_TogglePin(USR_LED_GPIO_Port, USR_LED_Pin);
-            HAL_Delay(1000);
-        }
-        else if (!clt_bus_ok && iso_bus_ok)
-        {
-            HAL_GPIO_TogglePin(USR_LED_GPIO_Port, USR_LED_Pin);
-            HAL_Delay(100);
-        }
-        else if (clt_bus_ok && !iso_bus_ok)
-        {
-            HAL_GPIO_TogglePin(USR_LED_GPIO_Port, USR_LED_Pin);
-            HAL_Delay(50);
-        }
-        else
-        {
-            HAL_GPIO_WritePin(USR_LED_GPIO_Port, USR_LED_Pin, GPIO_PIN_SET);
-            HAL_Delay(10);
-        }
+	        if (clt_bus_ok && iso_bus_ok)
+	        {
+	            HAL_GPIO_TogglePin(USR_LED_GPIO_Port, USR_LED_Pin);
+	            HAL_Delay(1000);
+	        }
+	        else if (!clt_bus_ok && iso_bus_ok)
+	        {
+	            HAL_GPIO_TogglePin(USR_LED_GPIO_Port, USR_LED_Pin);
+	            HAL_Delay(100);
+	        }
+	        else if (clt_bus_ok && !iso_bus_ok)
+	        {
+	            HAL_GPIO_TogglePin(USR_LED_GPIO_Port, USR_LED_Pin);
+	            HAL_Delay(50);
+	        }
+	        else
+	        {
+	            HAL_GPIO_WritePin(USR_LED_GPIO_Port, USR_LED_Pin, GPIO_PIN_SET);
+	            HAL_Delay(10);
+	        }
 
-        isoTestPattern <<= 1;
-        if (isoTestPattern == 0x00)
-        {
-            isoTestPattern = 0x01;
-        }
-    }
+	        isoTestPattern = (uint8_t)((isoTestPattern << 1) | (isoTestPattern >> 7));
 
+
+  }
+  /* USER CODE END 3 */
 }
 
 /**
@@ -183,12 +198,12 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.HSICalibrationValue = 64;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 32;
-  RCC_OscInitStruct.PLL.PLLN = 129;
+  RCC_OscInitStruct.PLL.PLLM = 4;
+  RCC_OscInitStruct.PLL.PLLN = 12;
   RCC_OscInitStruct.PLL.PLLP = 2;
-  RCC_OscInitStruct.PLL.PLLQ = 2;
+  RCC_OscInitStruct.PLL.PLLQ = 3;
   RCC_OscInitStruct.PLL.PLLR = 2;
-  RCC_OscInitStruct.PLL.PLLRGE = RCC_PLL1VCIRANGE_1;
+  RCC_OscInitStruct.PLL.PLLRGE = RCC_PLL1VCIRANGE_3;
   RCC_OscInitStruct.PLL.PLLVCOSEL = RCC_PLL1VCOWIDE;
   RCC_OscInitStruct.PLL.PLLFRACN = 0;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)

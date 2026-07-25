@@ -77,6 +77,8 @@ void Error_Handler(void);
 #define ADS_RST_GPIO_Port GPIOG
 #define DAC_RST_Pin GPIO_PIN_8
 #define DAC_RST_GPIO_Port GPIOG
+#define ETH_RST_Pin GPIO_PIN_10
+#define ETH_RST_GPIO_Port GPIOG
 
 /* USER CODE BEGIN Private defines */
 

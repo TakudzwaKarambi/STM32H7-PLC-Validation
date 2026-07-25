@@ -118,5 +118,5 @@ HAL_StatusTypeDef DAC81408_WriteRegister(
 const DAC81408_Status_t*
 DAC81408_GetStatus(
     DAC81408_t *dac);
-
+bool DAC81408_ValidateSPI(DAC81408_t *dac);
 #endif

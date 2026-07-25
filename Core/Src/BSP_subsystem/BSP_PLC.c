@@ -122,28 +122,67 @@ bool BSP_PLC_Init(void)
     }
     SystemStatus.ads8688Fault = false;
 
-    /*--------------------------------------------------
-      4. DAC81408 DAC Peripheral Setup
-    --------------------------------------------------*/
-    if (DAC81408_Init(&g_dac, &hspi4) != HAL_OK)
+    /* Pin Mapping Definitions for STM32H730ZBT6 */
+    #define DAC_CS_PORT       GPIOE
+    #define DAC_CS_PIN        GPIO_PIN_4
+
+    #define DAC_RST_PORT      GPIOG
+    #define DAC_RST_PIN       GPIO_PIN_8
+
+
+    bool BSP_DAC81408_Init(void)
     {
-        SystemStatus.dac81408Fault = true;
-        return false;
+        /* 1. Zero out struct & assign hardware pins BEFORE Init */
+        memset(&g_dac, 0, sizeof(DAC81408_t));
+
+        g_dac.csPort    = DAC_CS_PORT;
+        g_dac.csPin     = DAC_CS_PIN;
+
+        g_dac.resetPort = DAC_RST_PORT;
+        g_dac.resetPin  = DAC_RST_PIN;
+
+        /* Unconnected pins on PCB block AO set to NULL */
+        g_dac.ldacPort  = NULL;
+        g_dac.clrPort   = NULL;
+        g_dac.alarmPort = NULL;
+
+        /* Idle Chip Select High */
+        HAL_GPIO_WritePin(g_dac.csPort, g_dac.csPin, GPIO_PIN_SET);
+
+        /* 2. DAC Peripheral Driver Init */
+        if (DAC81408_Init(&g_dac, &hspi4) != HAL_OK)
+        {
+            SystemStatus.dac81408Fault = true;
+            return false;
+        }
+
+        /* 3. Hardware Reset Sequence (PG8 pulse) */
+        DAC81408_Reset(&g_dac);
     }
+        /* 4. SPI Communication Validation */
+        if (!DAC81408_ValidateSPI(&g_dac))
+        {
+            SystemStatus.dac81408Fault = true;
+            g_dac.status.spiHealthy = false;
+            return false;
+        }
 
-    BSP_ANALOG_OUTPUT_RegisterDriver(&DAC81408Drv);
+        g_dac.status.spiHealthy = true;
 
-    if (BSP_ANALOG_OUTPUT_Init(NULL) != ANALOG_OUTPUT_OK)
-    {
-        SystemStatus.dac81408Fault = true;
-        return false;
+        /* 5. Register with BSP Analog Output Framework */
+        DAC81408_RegisterDevice(&g_dac);
+        BSP_ANALOG_OUTPUT_RegisterDriver(&DAC81408Drv);
+
+        if (BSP_ANALOG_OUTPUT_Init(NULL) != ANALOG_OUTPUT_OK)
+        {
+            SystemStatus.dac81408Fault = true;
+            return false;
+        }
+
+        SystemStatus.dac81408Fault = false;
+        bspInitialized = true;
+        return true;
     }
-    SystemStatus.dac81408Fault = false;
-
-    /* Initialization Complete */
-    bspInitialized = true;
-    return true;
-}
 
 /*============================================================================
   DATA REFRESH SUBROUTINES (PROCESS IMAGE SYNCHRONIZATION)

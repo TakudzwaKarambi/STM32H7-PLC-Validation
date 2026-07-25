@@ -65,7 +65,8 @@ void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(ADS_CS_GPIO_Port, ADS_CS_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOG, DI_FAULT_Pin|DI_GOOD_Pin|ADS_RST_Pin|DAC_RST_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOG, DI_FAULT_Pin|DI_GOOD_Pin|ADS_RST_Pin|DAC_RST_Pin
+                          |ETH_RST_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(DI_EN_GPIO_Port, DI_EN_Pin, GPIO_PIN_SET);
@@ -98,8 +99,10 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(ADS_CS_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : DI_FAULT_Pin DI_GOOD_Pin ADS_RST_Pin DAC_RST_Pin */
-  GPIO_InitStruct.Pin = DI_FAULT_Pin|DI_GOOD_Pin|ADS_RST_Pin|DAC_RST_Pin;
+  /*Configure GPIO pins : DI_FAULT_Pin DI_GOOD_Pin ADS_RST_Pin DAC_RST_Pin
+                           ETH_RST_Pin */
+  GPIO_InitStruct.Pin = DI_FAULT_Pin|DI_GOOD_Pin|ADS_RST_Pin|DAC_RST_Pin
+                          |ETH_RST_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
