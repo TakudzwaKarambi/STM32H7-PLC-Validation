@@ -1,4 +1,4 @@
-# AP30D Industrial PLC Firmware
+# PID30D Industrial PLC Firmware
 ### STM32H730-Based OpenPLC Compatible Industrial Controller
 
 ![Platform](https://img.shields.io/badge/MCU-STM32H730ZBT6-blue)
